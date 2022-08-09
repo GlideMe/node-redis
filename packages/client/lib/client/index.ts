@@ -31,6 +31,7 @@ export interface RedisClientOptions<
     readonly?: boolean;
     legacyMode?: boolean;
     isolationPoolOptions?: PoolOptions;
+    commandOptions?: ClientCommandOptions;
 }
 
 type WithCommands = {
@@ -301,7 +302,7 @@ export default class RedisClient<
                 callback = args.pop() as ClientLegacyCallback;
             }
 
-            this.#sendCommand(transformLegacyCommandArguments(args))
+            this.#sendCommand(transformLegacyCommandArguments(args), this.#options?.commandOptions)
                 .then((reply: RedisCommandRawReply) => {
                     if (!callback) return;
 
