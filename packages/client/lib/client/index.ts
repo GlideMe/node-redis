@@ -298,6 +298,7 @@ export default class RedisClient<
         (this as any).#v4.sendCommand = this.#sendCommand.bind(this);
         (this as any).sendCommand = (...args: Array<any>): void => {
             let callback: ClientLegacyCallback;
+            let calledCallback: boolean;
             if (typeof args[args.length - 1] === 'function') {
                 callback = args.pop() as ClientLegacyCallback;
             }
@@ -307,7 +308,8 @@ export default class RedisClient<
                     if (!callback) return;
 
                     // https://github.com/NodeRedis/node-redis#commands:~:text=minimal%20parsing
-
+                    if (calledCallback) return;
+                    calledCallback = true;
                     callback(null, reply);
                 })
                 .catch((err: Error) => {
@@ -315,6 +317,8 @@ export default class RedisClient<
                         this.emit('error', err);
                         return;
                     }
+                    if (calledCallback) return;
+                    calledCallback = true;
 
                     callback(err);
                 });
