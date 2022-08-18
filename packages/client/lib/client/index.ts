@@ -317,7 +317,7 @@ export default class RedisClient<
                         this.emit('error', err);
                         return;
                     }
-                    if (calledCallback) return;
+                    if (calledCallback) throw err;
                     calledCallback = true;
 
                     callback(err);
