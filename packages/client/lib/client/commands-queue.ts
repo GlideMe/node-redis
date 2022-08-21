@@ -9,6 +9,7 @@ export interface QueueCommandOptions {
     chainId?: symbol;
     signal?: AbortSignal;
     returnBuffers?: boolean;
+    detectBuffers?: boolean;
     ignorePubSubMode?: boolean;
 }
 
@@ -26,6 +27,7 @@ interface CommandWaitingForReply {
     reject(err: unknown): void;
     channelsCounter?: number;
     returnBuffers?: boolean;
+    detectBuffers?: boolean;
 }
 
 export enum PubSubSubscribeCommands {
@@ -109,6 +111,7 @@ export default class RedisCommandsQueue {
     #decoder = new RESP2Decoder({
         returnStringsAsBuffers: () => {
             return !!this.#waitingForReply.head?.value.returnBuffers ||
+                !!this.#waitingForReply.head?.value.detectBuffers ||
                 this.#pubSubState.isActive;
         },
         onReply: reply => {
@@ -145,6 +148,7 @@ export default class RedisCommandsQueue {
                 args,
                 chainId: options?.chainId,
                 returnBuffers: options?.returnBuffers,
+                detectBuffers: options?.detectBuffers,
                 resolve,
                 reject
             });
@@ -341,7 +345,8 @@ export default class RedisCommandsQueue {
             resolve: toSend.resolve,
             reject: toSend.reject,
             channelsCounter: toSend.channelsCounter,
-            returnBuffers: toSend.returnBuffers
+            returnBuffers: toSend.returnBuffers,
+            detectBuffers: toSend.detectBuffers && toSend.args.some(a => Buffer.isBuffer(a))
         });
         this.#chainInExecution = toSend.chainId;
         return encoded;
